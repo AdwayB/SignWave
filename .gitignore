@@ -1,0 +1,8 @@
+.idea
+*.xlsx
+**/*.cpython-311.pyc
+**/__pycache/**
+**/*.pyc
+datasets/*
+*.pth
+*.png
