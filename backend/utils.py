@@ -1,12 +1,18 @@
+import os
 import torch
-from model.model_test import GestureClassifier
+from model.model_definition import GestureClassifier
 
 LABELS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
           'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
 
 INPUT_SIZE = 63
 
-PATH_TO_BEST_MODEL = './model/best_model.pth'
+current_dir = os.path.dirname(os.path.abspath(__file__))
+model_dir = os.path.join(current_dir, '..', 'model')
+model_location = os.path.join(model_dir, 'best_model.pth')
+model_location = os.path.normpath(model_location)
+
+PATH_TO_BEST_MODEL = model_location
 
 
 def load_model(model_path: str, input_size: int, num_classes: int, device: torch.device):

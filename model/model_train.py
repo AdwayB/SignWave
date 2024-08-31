@@ -6,12 +6,12 @@ from sklearn.utils.class_weight import compute_class_weight
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.optim as optim
 from torch.optim.lr_scheduler import StepLR
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, precision_recall_fscore_support
 import matplotlib
 import matplotlib.pyplot as plt
+from model.model_definition import GestureClassifier
 matplotlib.use('Agg')
 
 
@@ -50,44 +50,6 @@ test_dataset = TensorDataset(X_test_tensor, y_test_tensor)
 train_loader = DataLoader(train_dataset, batch_size=128, shuffle=True, drop_last=True)
 val_loader = DataLoader(val_dataset, batch_size=128, shuffle=False, drop_last=True)
 test_loader = DataLoader(test_dataset, batch_size=128, shuffle=False, drop_last=True)
-
-
-class GestureClassifier(nn.Module):
-    def __init__(self, input_size, num_classes):
-        super(GestureClassifier, self).__init__()
-
-        self.fc1 = nn.Linear(input_size, 512)
-        self.bn1 = nn.BatchNorm1d(512)
-
-        self.fc2 = nn.Linear(512, 256)
-        self.bn2 = nn.BatchNorm1d(256)
-
-        # self.fc3 = nn.Linear(512, 256)
-        # self.bn3 = nn.BatchNorm1d(256)
-        #
-        self.fc3 = nn.Linear(256, 128)
-        self.bn3 = nn.BatchNorm1d(128)
-
-        self.fc4 = nn.Linear(128, num_classes)
-
-        self.dropout = nn.Dropout(0.5)
-
-    def forward(self, x):
-        x = F.relu(self.bn1(self.fc1(x)))
-        x = self.dropout(x)
-
-        x = F.relu(self.bn2(self.fc2(x)))
-        x = self.dropout(x)
-
-        x = F.relu(self.bn3(self.fc3(x)))
-        x = self.dropout(x)
-        #
-        # x = F.relu(self.bn4(self.fc4(x)))
-        # x = self.dropout(x)
-
-        x = self.fc4(x)
-        return x
-
 
 input_size = X.shape[1]  # Number of input features (landmarks)
 num_classes = len(set(y))  # Number of unique classes
