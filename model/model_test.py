@@ -20,8 +20,6 @@ staged_data = pd.read_csv('./datasets/normalized_landmarks_dataset_b.csv').sampl
 
 data = pd.concat([real_life_data, staged_data], axis=0, ignore_index=True)
 
-print(data.head())
-
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
