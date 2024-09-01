@@ -46,16 +46,20 @@ def preprocess_landmarks(landmarks: list[float]):
     return normalized_landmarks
 
 
-def predict_landmark(model, device, landmark_data: list[float]):
-    normalised_landmarks = preprocess_landmarks(landmark_data)
-    input_tensor = torch.tensor([normalised_landmarks], dtype=torch.float32).to(device)
+def predict_landmark(model, device, landmark_data: list[list[float]]):
+    predictions_buffer = []
+    for landmarks in landmark_data:
+        normalised_landmarks = preprocess_landmarks(landmarks)
+        input_tensor = torch.tensor([normalised_landmarks], dtype=torch.float32).to(device)
 
-    with torch.no_grad():
-        output = model(input_tensor)
-        _, predicted = torch.max(output, 1)
+        with torch.no_grad():
+            output = model(input_tensor)
+            _, predicted = torch.max(output, 1)
 
-    predicted_label = LABELS[predicted.item()][0]
-    return predicted_label
+        predictions_buffer.append(LABELS[predicted.item()][0])
+
+    prediction = "".join(predictions_buffer)
+    return prediction
 
 
 def initialize_translation_model():

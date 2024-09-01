@@ -14,10 +14,11 @@ async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     try:
         while True:
-            data = await websocket.receive_json()
-            landmarks = data["landmarks"]
-            predicted_label = predict_landmark(model, device, landmarks)
-            await websocket.send_json({"predicted_label": predicted_label})
+            data_buffer = await websocket.receive_json()
+            landmarks_array = [data["landmarks"] for data in data_buffer]
+            last_uuid = data_buffer[-1]['uuid']
+            predicted_label = predict_landmark(model, device, landmarks_array)
+            await websocket.send_json({"last_uuid": last_uuid, "predicted_label": predicted_label})
     except WebSocketDisconnect:
         print("Client disconnected")
 
@@ -36,6 +37,8 @@ async def reload_model():
 
 # IDK, just in case
 @app.post("/predict")
-async def predict(landmarks: list):
-    predicted_label = predict_landmark(model, device, landmarks)
-    return {"predicted_label": predicted_label}
+async def predict(data: list):
+    landmarks_array = [d["landmarks"] for d in data]
+    last_uuid = data[-1]['uuid']
+    predicted_label = predict_landmark(model, device, landmarks_array)
+    return {"last_uuid": last_uuid, "predicted_label": predicted_label}
