@@ -12,20 +12,23 @@ mp_hands = mp.solutions.hands
 hands = mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7)
 mp_drawing = mp.solutions.drawing_utils
 
-api_url = "http://localhost:8000"
+api_url = "http://127.0.0.1:8000"
+ws_url = "ws://127.0.0.1:8000"
 
 cap = cv2.VideoCapture(0)
 
 BUFFER_SIZE = 10
 SEND_INTERVAL = 0.6
+ADD_INTERVAL = 0.8
 
 
 async def send_landmarks():
     buffer = deque(maxlen=BUFFER_SIZE)
     last_send_time = time.time()
+    last_add_time = time.time()
 
     try:
-        async with websockets.connect(f"{api_url}/ws/translate") as websocket:
+        async with websockets.connect(f"{ws_url}/ws/translate") as websocket:
             while cap.isOpened():
                 ret, frame = cap.read()
                 if not ret:
@@ -36,7 +39,12 @@ async def send_landmarks():
 
                 result = hands.process(rgb_frame)
 
-                if result.multi_hand_landmarks:
+                cv2.imshow('Hand Tracking', frame)
+                if cv2.waitKey(1) & 0xFF == ord('q'):
+                    break
+
+                time_at_process = time.time()
+                if result.multi_hand_landmarks and (time_at_process - last_add_time > ADD_INTERVAL):
                     for hand_landmarks in result.multi_hand_landmarks:
                         mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
@@ -48,12 +56,13 @@ async def send_landmarks():
                             "uuid": str(uuid.uuid4()),
                             "landmarks": landmarks
                         })
+                        last_add_time = time.time()
 
                 current_time = time.time()
                 if buffer and current_time - last_send_time > SEND_INTERVAL:
                     try:
                         start = time.time()
-                        # response = await requests.post(api_url, json={"landmarks": landmarks})
+                        # response = await requests.post(f"{api_url}/predict", json=(json.dumps(list(buffer))))
                         await websocket.send(json.dumps(list(buffer)))
 
                         response = await websocket.recv()
@@ -74,10 +83,6 @@ async def send_landmarks():
 
                     buffer.clear()
                     last_send_time = current_time
-
-                cv2.imshow('Hand Tracking', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
 
     except websockets.exceptions.ConnectionClosedError as e:
         print(f"WebSocket connection closed: {e}")
