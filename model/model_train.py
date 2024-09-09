@@ -59,7 +59,7 @@ model = model.to(device)
 class_weights = compute_class_weight('balanced', classes=np.unique(y_train), y=y_train)
 class_weights = torch.tensor(class_weights, dtype=torch.float).to(device)
 
-criterion = nn.CrossEntropyLoss(weight=class_weights)
+loss_fn = nn.CrossEntropyLoss(weight=class_weights)
 optimizer = optim.Adam(model.parameters(), lr=0.001, weight_decay=5e-4)
 num_epochs = 50
 # scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
@@ -74,7 +74,7 @@ for epoch in range(num_epochs):
         inputs, labels = inputs.to(device), labels.to(device)
         optimizer.zero_grad()
         outputs = model(inputs)
-        loss = criterion(outputs, labels)
+        loss = loss_fn(outputs, labels)
         loss.backward()
         optimizer.step()
         running_loss += loss.item()
@@ -89,7 +89,7 @@ for epoch in range(num_epochs):
         for inputs, labels in val_loader:
             inputs, labels = inputs.to(device), labels.to(device)
             outputs = model(inputs)
-            loss = criterion(outputs, labels)
+            loss = loss_fn(outputs, labels)
             val_loss += loss.item()
 
             _, predicted = torch.max(outputs.data, 1)

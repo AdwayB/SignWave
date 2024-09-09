@@ -113,24 +113,22 @@ if __name__ == '__main__':
     if data_staged:
         normalized_data_staged = normalize_landmarks(data_staged)
 
-    with open(output_file_real_life, 'w') as f:
-        json.dump(data_real_life, f, indent=4)
-
-    with open(output_file_staged, 'w') as f:
-        json.dump(data_staged, f, indent=4)
-
     if data_real_life:
+        with open(output_file_real_life, 'w') as f:
+            json.dump(data_real_life, f, indent=4)
+
         with open(normalized_output_file_real_life, 'w') as f:
             json.dump(normalized_data_real_life, f, indent=4)
 
-    if data_staged:
-        with open(normalized_output_file_staged, 'w') as f:
-            json.dump(normalized_data_staged, f, indent=4)
-
-    if data_real_life:
         save_to_csv(data_real_life, './datasets/landmarks_dataset_a.csv')
         save_to_csv(normalized_data_real_life, './datasets/normalized_landmarks_dataset_a.csv')
 
     if data_staged:
+        with open(output_file_staged, 'w') as f:
+            json.dump(data_staged, f, indent=4)
+
+        with open(normalized_output_file_staged, 'w') as f:
+            json.dump(normalized_data_staged, f, indent=4)
+
         save_to_csv(data_staged, './datasets/landmarks_dataset_b.csv')
         save_to_csv(normalized_data_staged, './datasets/normalized_landmarks_dataset_b.csv')
