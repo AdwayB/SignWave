@@ -23,76 +23,76 @@ ADD_INTERVAL = 0.8
 
 
 async def send_landmarks():
-    buffer = deque(maxlen=BUFFER_SIZE)
-    last_send_time = time.time()
-    last_add_time = time.time()
+  buffer = deque(maxlen=BUFFER_SIZE)
+  last_send_time = time.time()
+  last_add_time = time.time()
 
-    try:
-        async with websockets.connect(f"{ws_url}/ws/translate") as websocket:
-            while cap.isOpened():
-                ret, frame = cap.read()
-                if not ret:
-                    break
-                frame = cv2.flip(frame, 1)
+  try:
+    async with websockets.connect(f"{ws_url}/ws/translate") as websocket:
+      while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+          break
+        frame = cv2.flip(frame, 1)
 
-                rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
-                result = hands.process(rgb_frame)
+        result = hands.process(rgb_frame)
 
-                cv2.imshow('Hand Tracking', frame)
-                if cv2.waitKey(1) & 0xFF == ord('q'):
-                    break
+        cv2.imshow('Hand Tracking', frame)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+          break
 
-                time_at_process = time.time()
-                if result.multi_hand_landmarks and (time_at_process - last_add_time > ADD_INTERVAL):
-                    for hand_landmarks in result.multi_hand_landmarks:
-                        mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
+        time_at_process = time.time()
+        if result.multi_hand_landmarks and (time_at_process - last_add_time > ADD_INTERVAL):
+          for hand_landmarks in result.multi_hand_landmarks:
+            mp_drawing.draw_landmarks(frame, hand_landmarks, mp_hands.HAND_CONNECTIONS)
 
-                        landmarks = []
-                        for lm in hand_landmarks.landmark:
-                            landmarks.extend([lm.x, lm.y, lm.z])
+            landmarks = []
+            for lm in hand_landmarks.landmark:
+              landmarks.extend([lm.x, lm.y, lm.z])
 
-                        buffer.append({
-                            "uuid": str(uuid.uuid4()),
-                            "landmarks": landmarks
-                        })
-                        last_add_time = time.time()
+            buffer.append({
+              "uuid": str(uuid.uuid4()),
+              "landmarks": landmarks
+            })
+            last_add_time = time.time()
 
-                current_time = time.time()
-                if buffer and current_time - last_send_time > SEND_INTERVAL:
-                    try:
-                        start = time.time()
-                        # response = await requests.post(f"{api_url}/predict", json=(json.dumps(list(buffer))))
-                        await websocket.send(json.dumps(list(buffer)))
+        current_time = time.time()
+        if buffer and current_time - last_send_time > SEND_INTERVAL:
+          try:
+            start = time.time()
+            # response = await requests.post(f"{api_url}/predict", json=(json.dumps(list(buffer))))
+            await websocket.send(json.dumps(list(buffer)))
 
-                        response = await websocket.recv()
+            response = await websocket.recv()
 
-                        end = time.time()
-                        latency_ms = (end - start) * 1000
+            end = time.time()
+            latency_ms = (end - start) * 1000
 
-                        response_data = json.loads(response)
-                        predicted_label = response_data.get("predicted_label")
-                        print(f"Predicted label: {predicted_label} \n Latency: {latency_ms: .2f}ms")
+            response_data = json.loads(response)
+            predicted_label = response_data.get("predicted_label")
+            print(f"Predicted label: {predicted_label} \n Latency: {latency_ms: .2f}ms")
 
-                    except websockets.exceptions.ConnectionClosedError as e:
-                        print(f"WebSocket connection closed while sending data: {e}")
-                        break
+          except websockets.exceptions.ConnectionClosedError as e:
+            print(f"WebSocket connection closed while sending data: {e}")
+            break
 
-                    except Exception as e:
-                        print(f"An error occurred while sending or receiving data: {e}")
+          except Exception as e:
+            print(f"An error occurred while sending or receiving data: {e}")
 
-                    buffer.clear()
-                    last_send_time = current_time
+          buffer.clear()
+          last_send_time = current_time
 
-    except websockets.exceptions.ConnectionClosedError as e:
-        print(f"WebSocket connection closed: {e}")
+  except websockets.exceptions.ConnectionClosedError as e:
+    print(f"WebSocket connection closed: {e}")
 
-    except Exception as e:
-        print(f"An unexpected error occurred: {e}")
+  except Exception as e:
+    print(f"An unexpected error occurred: {e}")
 
-    finally:
-        cap.release()
-        cv2.destroyAllWindows()
+  finally:
+    cap.release()
+    cv2.destroyAllWindows()
 
 
 asyncio.run(send_landmarks())
