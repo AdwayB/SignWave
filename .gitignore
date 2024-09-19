@@ -6,3 +6,4 @@
 */datasets/*
 *.pth
 *.png
+node_modules
