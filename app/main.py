@@ -1,10 +1,22 @@
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
-from backend.utils import initialize_translation_model, predict_landmark
+from fastapi.middleware.cors import CORSMiddleware
+from app.utils import initialize_translation_model, predict_landmark
 import logging
 
 logging.basicConfig(level=logging.WARNING)
 
 app = FastAPI()
+
+origins = ["*"]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 model, device = initialize_translation_model()
 
